@@ -3,6 +3,7 @@
 from multiprocessing.pool import ThreadPool
 from threading import Semaphore
 import urllib.request
+import requests
 import io
 import math
 import exifread
@@ -11,6 +12,7 @@ import time
 import hashlib
 import pyarrow as pa
 import traceback
+import os
 
 import fsspec
 from .logger import CappedCounter
@@ -41,16 +43,42 @@ def download_image(row, timeout, user_agent_token, disallowed_header_directives)
     user_agent_string = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0"
     if user_agent_token:
         user_agent_string += f" (compatible; {user_agent_token}; +https://github.com/rom1504/img2dataset)"
+
     try:
-        request = urllib.request.Request(url, data=None, headers={"User-Agent": user_agent_string})
-        with urllib.request.urlopen(request, timeout=timeout) as r:
+        headers = {"User-Agent": user_agent_string}
+        proxy = None
+
+        cfg_proxy_xmdl_on = os.getenv("PROXY_XMDL_ON", "False").lower() in ("true", "on", "yes", "1")
+        if cfg_proxy_xmdl_on:
+            # prepare proxy auth
+            cfg_orderno = os.getenv("PROXY_XMDL_ORDERNO", "").strip()
+            cfg_secret = os.getenv("PROXY_XMDL_SECRET", "").strip()
+            cfg_proxy_server = os.getenv("PROXY_XMDL_PROXYSERVER", "").strip()
+            if len(cfg_orderno) == 0 or len(cfg_secret) == 0 or len(cfg_proxy_server) == 0:
+                return key, None, str("need env variables: PROXY_XMDL_ORDERNO/PROXY_XMDL_SECRET/PROXY_XMDL_PROXYSERVER")
+
+            timestamp = str(int(time.time()))  # 计算时间戳
+            sign_txt = "orderno=" + cfg_orderno + "," + "secret=" + cfg_secret + "," + "timestamp=" + timestamp
+            sign_txt = sign_txt.encode()
+            sign_md5 = hashlib.md5(sign_txt).hexdigest().upper()
+            header_auth = (
+                "sign=" + sign_md5 + "&" + "orderno=" + cfg_orderno + "&" + "timestamp=" + timestamp + "&change=true"
+            )
+
+            headers["Proxy-Authorization"] = header_auth
+            proxy = {"http": cfg_proxy_server}
+
+        with requests.get(
+            url, headers=headers, proxies=proxy, timeout=timeout, verify=False, allow_redirects=False
+        ) as r:
+            # with urllib.request.urlopen(request, timeout=timeout) as r:
             if disallowed_header_directives and is_disallowed(
                 r.headers,
                 user_agent_token,
                 disallowed_header_directives,
             ):
                 return key, None, "Use of image disallowed by X-Robots-Tag directive"
-            img_stream = io.BytesIO(r.read())
+            img_stream = io.BytesIO(r.content)
         return key, img_stream, None
     except Exception as err:  # pylint: disable=broad-except
         if img_stream is not None:
