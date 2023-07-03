@@ -462,6 +462,8 @@ then
 make lint
 make test
 
+# img2dataset --url_list=oss://aigc-models-training/data/raw/tuchong/crawler/ --output_folder=simplecache::oss://aigc-models-training/data/raw/tuchong/img2dataset --processes_count=3 --thread_count=20 --resize_mode=no --output_format=webdataset --input_format=csv.gz --url_col=url --caption_col=title --save_additional_columns="[detail]" --retries=10 --disallowed_header_directives="[]" --incremental_mode=incremental
+
 # img2dataset --url_list=oss://aigc-models-training/data/raw/tuchong/crawler/ --output_folder=/mnt/extdisk1/devroot/data/tuchong/webdataset/ --processes_count=3 --thread_count=12 --resize_mode=no --output_format=webdataset --input_format=csv.gz --url_col=url --caption_col=title --save_additional_columns="[detail]" --retries=10 --disallowed_header_directives="[]" --incremental_mode=incremental
 
 # PROXY_XMDL_ON=yes PROXY_XMDL_ORDERNO=DT20230701010109E4HPbnlb PROXY_XMDL_SECRET=xxx PROXY_XMDL_PROXYSERVER="http://dtbf.xiongmaodaili.com:8089" img2dataset --url_list=oss://aigc-models-training/data/raw/tuchong/crawler/ --output_folder=/mnt/extdisk1/devroot/data/tuchong/webdataset/ --processes_count=3 --thread_count=7 --resize_mode=no --output_format=webdataset --input_format=csv.gz --url_col=url --caption_col=title --save_additional_columns="[detail]" --retries=10 --disallowed_header_directives="[]" --incremental_mode=incremental
