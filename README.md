@@ -53,12 +53,21 @@ First get some image url list. For example:
 echo 'https://placekitten.com/200/305' >> myimglist.txt
 echo 'https://placekitten.com/200/304' >> myimglist.txt
 echo 'https://placekitten.com/200/303' >> myimglist.txt
+
+echo 'http://cdn9-banquan.ituchong.com/weili/image/ml/1019008315728068627.jpeg' >> /tmp/test_urls.txt
+echo 'http://cdn9-banquan.ituchong.com/weili/image/ml/1168598779542241298.jpeg' >> /tmp/test_urls.txt
+mkdir /tmp/test-webdataset/
+rm -f /tmp/test-webdataset/*
 ```
 
 Then, run the tool:
 
 ```bash
 img2dataset --url_list=myimglist.txt --output_folder=output_folder --thread_count=64 --image_size=256
+
+# for test purpose only
+# PROXY_XMDL_ON=yes PROXY_XMDL_ORDERNO=DT20230702020229S6kdFgNd PROXY_XMDL_SECRET=xxx PROXY_XMDL_PROXYSERVER="http://dtbf.xiongmaodaili.com:8089" img2dataset --url_list=/tmp/test_urls.txt --output_folder=/tmp/test-webdataset/ --processes_count=1 --thread_count=1 --resize_mode=no --output_format=webdataset --input_format=txt --retries=10 --disallowed_header_directives="[]" --incremental_mode=incremental
+# img2dataset --url_list=/tmp/test_urls.txt --output_folder=/tmp/test-webdataset/ --processes_count=1 --thread_count=1 --resize_mode=no --output_format=webdataset --input_format=txt --retries=10 --disallowed_header_directives="[]" --incremental_mode=incremental
 ```
 
 The tool will then automatically download the urls, resize them, and store them with that format:
@@ -436,6 +445,10 @@ Setup a virtualenv:
 python3 -m venv .env
 source .env/bin/activate
 pip install -e .
+
+# for ubuntu 20.04 with aliyun ossfs support
+# pip install -e . wheel pyspark ossfs==2023.1.0 oss2==2.16.0 fsspec==2022.11.0
+
 ```
 
 to run tests:
@@ -448,6 +461,11 @@ then
 ```bash
 make lint
 make test
+
+# img2dataset --url_list=oss://aigc-models-training/data/raw/tuchong/crawler/ --output_folder=/mnt/extdisk1/devroot/data/tuchong/webdataset/ --processes_count=3 --thread_count=12 --resize_mode=no --output_format=webdataset --input_format=csv.gz --url_col=url --caption_col=title --save_additional_columns="[detail]" --retries=10 --disallowed_header_directives="[]" --incremental_mode=incremental
+
+# PROXY_XMDL_ON=yes PROXY_XMDL_ORDERNO=DT20230701010109E4HPbnlb PROXY_XMDL_SECRET=xxx PROXY_XMDL_PROXYSERVER="http://dtbf.xiongmaodaili.com:8089" img2dataset --url_list=oss://aigc-models-training/data/raw/tuchong/crawler/ --output_folder=/mnt/extdisk1/devroot/data/tuchong/webdataset/ --processes_count=3 --thread_count=7 --resize_mode=no --output_format=webdataset --input_format=csv.gz --url_col=url --caption_col=title --save_additional_columns="[detail]" --retries=10 --disallowed_header_directives="[]" --incremental_mode=incremental
+
 ```
 
 You can use `make black` to reformat the code
